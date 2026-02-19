@@ -1,0 +1,50 @@
+# INTERVIEW PREPARATION GUIDE: Employee Leave Prediction & Policy Engine
+
+This document outlines the technical journey of the project from raw data to a production-ready dashboard.
+
+---
+
+## 1. Data Cleaning & Preprocessing
+**Question: "How did you handle the raw data?"**
+*   **Handling Nulls**: Identified and filled missing values in critical columns like `ELBALANCE` and `HPLBALANCE` to ensure the model had continuous numerical data.
+*   **Data Consistency**: Converted date columns (`LVREQSTDT`) into standard datetime objects and extracted temporal features.
+*   **Label Encoding**: Categorical variables like `LEAVECODE` and `EMPLOYEECODE` were transformed into numerical formats using `LabelEncoder` for ML compatibility.
+*   **NLP for Reasons**: Used **TF-IDF (Term Frequency-Inverse Document Frequency)** to convert raw text reasons (`LVREASON`) into numerical vectors, allowing the model to "understand" the sentiment and context of a request.
+
+## 2. Exploratory Data Analysis (EDA)
+**Question: "What insights did you gather before modeling?"**
+*   **Leave Distribution**: Discovered that certain leave types (like CL) are requested more frequently but have stricter monthly limits.
+*   **Temporal Trends**: Observed seasonality in leave requests (e.g., higher volume during specific months/festivals).
+*   **Approval Correlation**: Found that "Reason length" and "Balance availability" were strong indicators of approval probability.
+
+## 3. Feature Engineering
+**Question: "What features made your model perform well?"**
+*   **Temporal Features**: Extracted `applied_day_of_week` and `applied_month` to capture weekly and monthly habits.
+*   **Historical Aggregations**: Created a `total_past_leaves` feature per employee to represent their leave-taking behavior history.
+*   **Reason Complexity**: Used the TF-IDF vectorizer to capture key words like "Emergency", "Sick", or "Vacation" which directly impact approval.
+
+## 4. Modeling & Accuracy
+**Question: "Which algorithm did you use and why?"**
+*   **Algorithm**: **Random Forest Classifier**.
+*   **Why?**: It handles both numerical and categorical data exceptionally well, is resistant to overfitting, and allows us to calculate "Feature Importance."
+*   **Performance**: Achieved **~97% Accuracy** on the test set. 
+*   **Consistency**: Used **Cross-Validation** during training to ensure the model performs consistently across different subsets of data, not just the training set.
+
+## 5. Challenges & Scenarios (The Corporate Policy Engine)
+**Question: "How did you handle business rules that AI might miss?"**
+*   **The Problem**: AI might predict a 90% chance of approval based on the reason, but the employee might have already taken their monthly quota of leaves.
+*   **The Implementation**: Developed a **Hybrid Logic System**. The AI predicts the *likelihood*, but a **Strict Corporate Policy Engine** overrides the result if rules are broken:
+    *   **Frequency Cap**: Max 3 requests per month.
+    *   **Strict Single-Type Rule**: Cannot take the same type of leave twice in one month.
+    *   **Balance Validation**: Automatic rejection if `leave_days > balance`.
+*   **Result**: This ensures the model is not just "smart" but also "compliant" with HR policies.
+
+## 6. System Architecture (The Dashboard)
+**Question: "How is the application structured?"**
+*   **Frontend**: Streamlit for a fast, interactive UI.
+*   **Backend**: Python (Pandas/NumPy) for data processing.
+*   **Inference**: Joblib for loading serialized models and real-time prediction.
+*   **Persistence**: Used **Session State** in Streamlit to manage user searches and filter states without losing data during re-renders.
+
+---
+**Key Takeaway for Interviewers**: "This wasn't just about training a model; it was about building a complete Decision Support System that combines Machine Learning with deterministic Business Intelligence (HR Policies)."
